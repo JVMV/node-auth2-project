@@ -5,11 +5,11 @@ const Users = require('../users/users-model')
 const restricted = (req, res, next) => {
   const token = req.headers.authorization
   if(token) {
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, JWT_SECRET, (err, decodedJWT) => {
       if(err) {
         next({ status: 401, message: 'Token invalid' })
       } else {
-        req.decodedJWT = decoded
+        req.decodedJWT = decodedJWT
         next()
       }
     })
@@ -34,7 +34,7 @@ const restricted = (req, res, next) => {
 }
 
 const only = role_name => (req, res, next) => {
-  if(req.decodedJWT && req.decodedJWT.role === role_name) {
+  if(req.decodedJWT.role_name === role_name) {
     next()
   } else {
     next({ status: 403, message: 'This is not for you' })
@@ -77,21 +77,26 @@ const checkUsernameExists = async (req, res, next) => {
 const validateRoleName = async (req, res, next) => {
   const { role_name, username } = req.body
   if(role_name) {
+    console.log('trimming role name')
     req.role_name = role_name.trim()
   }
   if(req.role_name === '' || !req.role_name) {
+    console.log('changing role to student')
     req.role_name = 'student'
     console.log(req.role_name)
   }
   if(req.role_name === 'admin') {
+    console.log('role is admin')
       next({ status: 422, message: 'Role name can not be admin' })
     }
     const check = req.role_name.split('')
   if(check.length > 32) {
+      console.log('longer than 32 chars')
       next({ status: 422, message: 'Role name can not be longer than 32 chars' })
     } else {
       const [duplicate] = await Users.findBy({username: username})
       if(duplicate) {
+        console.log('userame found in db')
         next({status:422, message: 'username is not available'})
       } else {
         next()

@@ -6,10 +6,11 @@ const Users = require('../users/users-model')
 const bcrypt = require('bcryptjs')
 
 router.post("/register", validateRoleName, async (req, res, next) => {
-  const { username, password, role_name } = req.body
+  const { username, password } = req.body
   const hPass = bcrypt.hashSync(password, 8)
   req.password = hPass
-  const registered = await Users.add({username: username, password: hPass, role_name: role_name})
+  console.log(req.role_name)
+  const [registered] = await Users.add({username: username, password: hPass, role_name: req.role_name})
   res.status(201).json(registered)
   /**
     [POST] /api/auth/register { "username": "anna", "password": "1234", "role_name": "angel" }
@@ -25,7 +26,6 @@ router.post("/register", validateRoleName, async (req, res, next) => {
 });
 
 const buildToken = user => {
-  console.log('build token', user)
   const payload = {
     subject: user.user_id,
     username: user.username,
